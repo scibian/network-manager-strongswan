@@ -11,6 +11,7 @@ DEB_DH_MAKESHLIBS_ARGS_ALL := -X/usr/lib/NetworkManager/
 
 DEB_DH_INSTALL_SOURCEDIR := debian/tmp
 
+CFLAGS = -Wno-error=deprecated-declarations -Wdeprecated-declarations
 
 install/network-manager-strongswan::
 	rm debian/network-manager-strongswan/usr/lib/NetworkManager/libnm-strongswan-properties.*a
