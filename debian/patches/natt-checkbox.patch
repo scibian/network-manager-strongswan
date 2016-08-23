@@ -1,0 +1,66 @@
+Description: Add option to force the use of NAT-T port via strongswan-nm
+ RFC5996 allows for the initiator to communicate to port 4500, even at the
+ beginning of the connection.
+Forwarded: https://wiki.strongswan.org/issues/625
+Author: Raphael Geissert <raphael-externe.geissert@edf.fr>
+Last-Update: 2014-06-24
+
+Index: network-manager-strongswan-1.3.0/properties/nm-strongswan-dialog.ui
+===================================================================
+--- network-manager-strongswan-1.3.0.orig/properties/nm-strongswan-dialog.ui	2011-09-07 13:58:05.000000000 +0200
++++ network-manager-strongswan-1.3.0/properties/nm-strongswan-dialog.ui	2014-06-24 12:11:31.836954481 +0200
+@@ -357,6 +357,24 @@
+                         <property name="position">2</property>
+                       </packing>
+                     </child>
++                    <child>
++                      <object class="GtkCheckButton" id="natt-check">
++                        <property name="label" translatable="yes">Enforce NAT-_T port use</property>
++                        <property name="visible">True</property>
++                        <property name="can_focus">True</property>
++                        <property name="receives_default">False</property>
++                        <property name="has_tooltip">True</property>
++                        <property name="tooltip_text" translatable="yes">UDP-encapsulated traffic is transmitted over a different port to avoid NATs interference. This enforces the use of the NAT-T port from the beginning of the connection.</property>
++                        <property name="use_action_appearance">False</property>
++                        <property name="use_underline">True</property>
++                        <property name="draw_indicator">True</property>
++                      </object>
++                      <packing>
++                        <property name="expand">True</property>
++                        <property name="fill">True</property>
++                        <property name="position">3</property>
++                      </packing>
++                    </child>
+                   </object>
+                 </child>
+               </object>
+Index: network-manager-strongswan-1.3.0/properties/nm-strongswan.c
+===================================================================
+--- network-manager-strongswan-1.3.0.orig/properties/nm-strongswan.c	2011-09-07 13:58:05.000000000 +0200
++++ network-manager-strongswan-1.3.0/properties/nm-strongswan.c	2014-06-24 12:12:43.777434039 +0200
+@@ -272,6 +272,14 @@ init_plugin_ui (StrongswanPluginUiWidget
+ 	}
+ 	g_signal_connect (G_OBJECT (widget), "toggled", G_CALLBACK (settings_changed_cb), self);
+ 
++	widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "natt-check"));
++	value = nm_setting_vpn_get_data_item (settings, "natt");
++	if (value && strcmp(value, "yes") == 0)
++	{
++		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), TRUE);
++	}
++	g_signal_connect (G_OBJECT (widget), "toggled", G_CALLBACK (settings_changed_cb), self);
++
+ 	return TRUE;
+ }
+ 
+@@ -366,6 +374,10 @@ update_connection (NMVpnPluginUiWidgetIn
+ 	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+ 	nm_setting_vpn_add_data_item (settings, "ipcomp", active ? "yes" : "no");
+ 
++	widget = GTK_WIDGET (gtk_builder_get_object (priv->builder, "natt-check"));
++	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
++	nm_setting_vpn_add_data_item (settings, "natt", active ? "yes" : "no");
++
+ 
+ 	if (!nm_setting_set_secret_flags (NM_SETTING (settings),
+ 				"password", NM_SETTING_SECRET_FLAG_AGENT_OWNED, NULL))
